@@ -19,18 +19,52 @@ function App() {
         }))
         setEvents(mapped)
       })
-      .catch(err => console.error('Error loading events', err))
   }, [])
+
+  const handleSelectSlot = async ({ start, end }) => {
+    const title = window.prompt('Event title?')
+    if (!title) return
+
+    const body = {
+      title,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      all_day: false,
+    }
+
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      console.error('Error creating event')
+      return
+    }
+
+    const created = await res.json()
+    setEvents(prev => [
+      ...prev,
+      {
+        ...created,
+        start: new Date(created.start),
+        end: new Date(created.end),
+      },
+    ])
+  }
 
   return (
     <div style={{ height: '100vh', padding: '1rem' }}>
       <Calendar
+        selectable
         localizer={localizer}
         events={events}
         defaultView={Views.MONTH}
         startAccessor="start"
         endAccessor="end"
         views={['month', 'week', 'day']}
+        onSelectSlot={handleSelectSlot}
       />
     </div>
   )
